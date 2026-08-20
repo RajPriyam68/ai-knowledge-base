@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                         String           @id @default(uuid()) @db.Uuid
+  email                      String           @unique @db.VarChar(255)
+  passwordHash               String           @db.VarChar(255)
+  name                       String           @db.VarChar(120)
+  avatarUrl                  String?          @db.VarChar(500)
+  role                       String           @default("USER") @db.VarChar(20)
+  isEmailVerified            Boolean          @default(false)
+  emailVerifiedAt            DateTime?
+  emailVerificationTokenHash String?          @db.VarChar(128)
+  resetPasswordTokenHash     String?          @db.VarChar(128)
+  resetPasswordExpiresAt     DateTime?
+  isSuspended                Boolean          @default(false)
+  suspendReason              String?          @db.VarChar(500)
+  lastLoginAt                DateTime?
+  passwordChangedAt          DateTime?
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+  analyticsEvents            AnalyticsEvent[]
+  apiUsage                   ApiUsage[]
+  chats                      Chat[]
+  documents                  Document[]
+  documentChunks             DocumentChunk[]
+  embeddings                 Embedding[]
+  knowledgeBases             KnowledgeBase[]
+  knowledgeBaseMemberships   KnowledgeBaseMember[]
+  messages                   Message[]
+  notifications              Notification[]
+  sessions                   Session[]
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique @db.VarChar(128)
+  userAgent String?   @db.VarChar(500)
+  ip        String?   @db.VarChar(64)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model KnowledgeBase {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @db.Uuid
+  name        String          @db.VarChar(120)
+  description String?         @db.VarChar(500)
+
+  icon        String      @default("book-open") @db.VarChar(40)
+  color       String      @default("blue") @db.VarChar(30)
+  visibility  Visibility  @default(PRIVATE)
+  isArchived Boolean @default(false)
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  chats       Chat[]
+  documents   Document[]
+  chunks      DocumentChunk[]
+  embeddings  Embedding[]
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members     KnowledgeBaseMember[]
+
+  @@index([userId])
+  @@index([userId, updatedAt])
+  @@index([userId, isArchived])
+}
+model KnowledgeBaseMember {
+  id        String                  @id @default(uuid()) @db.Uuid
+  kbId      String                  @db.Uuid
+  userId    String                  @db.Uuid
+  role      KnowledgeBaseMemberRole @default(VIEWER)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  knowledgeBase KnowledgeBase @relation(fields: [kbId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+
+  @@unique([kbId, userId])
+  @@index([kbId])
+  @@index([userId])
+}
+
+model Document {
+  id           String          @id @default(uuid()) @db.Uuid
+  kbId         String          @db.Uuid
+  userId       String          @db.Uuid
+  filename     String          @db.VarChar(500)
+  originalName String          @db.VarChar(255)
+  mimeType     String          @db.VarChar(120)
+  extension    String          @db.VarChar(10)
+  size         Int
+  storagePath  String          @db.VarChar(1000)
+  status       String          @default("PENDING") @db.VarChar(20)
+  errorMessage String?         @db.VarChar(1000)
+  chunkCount   Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  kb           KnowledgeBase   @relation(fields: [kbId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks       DocumentChunk[]
+  embeddings   Embedding[]
+  messages     Message[]       @relation("DocumentToMessage")
+
+  @@index([kbId])
+  @@index([userId])
+  @@index([status])
+}
+
+model DocumentChunk {
+  id         String        @id @default(uuid()) @db.Uuid
+  documentId String        @db.Uuid
+  kbId       String        @db.Uuid
+  userId     String        @db.Uuid
+  content    String
+  chunkIndex Int
+  tokenCount Int           @default(0)
+  createdAt  DateTime      @default(now())
+  document   Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  kb         KnowledgeBase @relation(fields: [kbId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  embedding  Embedding?
+
+  @@index([documentId])
+  @@index([kbId])
+  @@index([userId])
+}
+
+model Embedding {
+  id         String                 @id @default(uuid()) @db.Uuid
+  chunkId    String                 @unique @db.Uuid
+  documentId String                 @db.Uuid
+  kbId       String                 @db.Uuid
+  userId     String                 @db.Uuid
+  vector     Unsupported("vector")?
+  model      String                 @db.VarChar(120)
+  dimensions Int                    @default(384)
+  createdAt  DateTime               @default(now())
+  chunk      DocumentChunk          @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  document   Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  kb         KnowledgeBase          @relation(fields: [kbId], references: [id], onDelete: Cascade)
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([kbId])
+  @@index([documentId])
+  @@index([userId])
+}
+
+model Chat {
+  id        String         @id @default(uuid()) @db.Uuid
+  userId    String         @db.Uuid
+  kbId      String?        @db.Uuid
+  title     String         @db.VarChar(200)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  kb        KnowledgeBase? @relation(fields: [kbId], references: [id])
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([userId, updatedAt])
+  @@index([kbId])
+}
+
+model Message {
+  id          String     @id @default(uuid()) @db.Uuid
+  chatId      String     @db.Uuid
+  userId      String     @db.Uuid
+  role        String     @db.VarChar(20)
+  content     String
+  citations   Json?
+  documentIds Json?
+  createdAt   DateTime   @default(now())
+  chat        Chat       @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents   Document[] @relation("DocumentToMessage")
+
+  @@index([chatId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  type      String   @default("SYSTEM") @db.VarChar(30)
+  title     String   @db.VarChar(200)
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  event     String   @db.VarChar(100)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([event, createdAt])
+  @@index([userId])
+}
+
+model SystemLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  level     String   @db.VarChar(10)
+  message   String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([level, createdAt])
+  @@index([createdAt])
+}
+
+model ApiUsage {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  endpoint   String   @db.VarChar(200)
+  method     String   @db.VarChar(10)
+  statusCode Int
+  durationMs Int
+  model      String?  @db.VarChar(120)
+  tokensIn   Int?
+  tokensOut  Int?
+  createdAt  DateTime @default(now())
+  user       User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([endpoint])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Setting {
+  key         String   @id @db.VarChar(120)
+  value       Json
+  description String?  @db.VarChar(500)
+  updatedAt   DateTime @updatedAt
+}
+
+enum Visibility {
+  PRIVATE
+  SHARED
+  PUBLIC
+}
+enum KnowledgeBaseMemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
