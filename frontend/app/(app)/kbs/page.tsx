@@ -52,17 +52,15 @@ const { data, isLoading } = useQuery({
   queryKey: ["kb", "list", search, visibility, sort, archived],
   queryFn: () => {
     const params = new URLSearchParams();
-
     if (search.trim()) {
       params.set("q", search.trim());
     }
-
     if (visibility !== "ALL") {
       params.set("visibility", visibility);
     }
     if (sort !== "updated_desc") {
   params.set("sort", sort);
-} 
+}
     params.set("archived", String(archived));
 
     const query = params.toString();
@@ -77,8 +75,7 @@ const { data, isLoading } = useQuery({
   description?: string;
   icon: string;
   color: string;
-  visibility: "PRIVATE" | "SHARED" | "PUBLIC";  }) =>
-      apiPost<KnowledgeBase>("/kb", payload),
+  visibility: "PRIVATE" | "SHARED" | "PUBLIC";  }) => apiPost<KnowledgeBase>("/kb", payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kb", "list"] });
       queryClient.invalidateQueries({ queryKey: ["kb", "stats"] });
@@ -97,7 +94,6 @@ const { data, isLoading } = useQuery({
   payload: {
     name?: string;
     description?: string;
-
     icon?: string;
     color?: string;
     visibility?: "PRIVATE" | "SHARED" | "PUBLIC";
@@ -183,7 +179,7 @@ const { data, isLoading } = useQuery({
   }
   className="h-10 rounded-md border px-3 text-sm"
 >
-  
+
   <option value="ALL">All Visibility</option>
   <option value="PRIVATE">Private</option>
   <option value="SHARED">Shared</option>
@@ -250,7 +246,7 @@ const { data, isLoading } = useQuery({
   return <Icon className="h-4.5 w-4.5" />;
 })()}
 </div>
-  
+
                     <div className="min-w-0">
                       <CardTitle className="truncate text-sm">{kb.name}</CardTitle>
                       <p className="mt-0.5 text-xs text-muted-foreground">
@@ -385,10 +381,7 @@ function CreateKbModal({
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("BookOpen");
   const [color, setColor] = useState("#2563eb");
-  const [visibility, setVisibility] = useState<
-  "PRIVATE" | "SHARED" | "PUBLIC"
-  >("PRIVATE");
-
+  const [visibility, setVisibility] = useState<"PRIVATE" | "SHARED" | "PUBLIC">("PRIVATE");
   return (
     <Modal
       open={open}
@@ -526,7 +519,7 @@ function EditKbModal({
   const [visibility, setVisibility] = useState<
   "PRIVATE" | "SHARED" | "PUBLIC"
   >(kb?.visibility ?? "PRIVATE");
-  const key = kb?.id ?? "empty";
+
 
   return (
     <Modal
@@ -617,7 +610,7 @@ function EditKbModal({
     <option value="SHARED">Shared</option>
     <option value="PUBLIC">Public</option>
   </select>
-</div> 
+</div>
     </Modal>
   );
 }

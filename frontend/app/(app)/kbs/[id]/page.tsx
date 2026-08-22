@@ -94,17 +94,12 @@ const {
     >(`/kb/${kbId}/members`),
   enabled: !!kbId,
 });
-const {
-  data: stats,
-  isLoading: statsLoading,
-} = useQuery<KnowledgeBaseStats>({
-  queryKey: ["kb-stats", kbId],
+const { data: stats } = useQuery<KnowledgeBaseStats>({queryKey: ["kb-stats", kbId],
   queryFn: () => apiGet<KnowledgeBaseStats>(`/kb/${kbId}/stats`),
   enabled: !!kbId,
 });
 const { toast } = useToast();
 const queryClient = useQueryClient();
-
 const updateMutation = useMutation({
   mutationFn: (payload: {
     name?: string;

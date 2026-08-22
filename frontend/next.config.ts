@@ -1,9 +1,13 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const backendUrl = process.env.BACKEND_INTERNAL_URL ?? "http://localhost:5000";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+
+  outputFileTracingRoot: path.join(__dirname, ".."),
+
   async rewrites() {
     return [
       {
@@ -12,6 +16,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
   allowedDevOrigins: [".monkeycode-ai.live"],
 };
 

@@ -9,5 +9,9 @@ export default defineConfig({
     testTimeout: 120000,
     hookTimeout: 120000,
     fileParallelism: false,
+    env: {
+      NODE_ENV: "test",
+      GEMINI_API_KEY: "",
+    },
   },
 });
