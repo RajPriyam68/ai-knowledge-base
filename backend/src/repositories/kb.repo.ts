@@ -26,9 +26,18 @@ export async function listKnowledgeBases(
   },
 ) {
   const where: Prisma.KnowledgeBaseWhereInput = {
-    userId,
-    isArchived: options?.archived ?? false,
-  };
+  isArchived: options?.archived ?? false,
+  OR: [
+    { userId },
+    {
+      members: {
+        some: {
+          userId,
+        },
+      },
+    },
+  ],
+};
 
   if (options?.search?.trim()) {
     where.name = {

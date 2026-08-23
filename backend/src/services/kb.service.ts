@@ -5,6 +5,7 @@ import { deleteChunksByKb } from "../repositories/embedding.repo.js";
 import { trackEvent } from "../repositories/analytics.repo.js";
 import { getStorageUsage } from "../storage/file.storage.js";
 import { logToDb } from "../config/logger.js";
+import { findKbMemberRole } from "../repositories/kb-member.repo.js";
 
 export async function createKb(
   userId: string,
@@ -50,9 +51,18 @@ export async function listKbs(
 
 export async function getKb(userId: string, kbId: string) {
   const kb = await kbRepo.findKnowledgeBaseById(kbId);
-  if (!kb || kb.userId !== userId) {
+
+if (!kb) {
+  throw new NotFoundError("Knowledge base not found");
+}
+
+if (kb.userId !== userId) {
+  const memberRole = await findKbMemberRole(kbId, userId);
+
+  if (!memberRole) {
     throw new NotFoundError("Knowledge base not found");
   }
+}
   const documents = await listDocumentsByKb(kbId, userId);
   const storage = await getStorageUsage();
   return { ...kb, documents, totalSize: documents.reduce((sum, d) => sum + d.size, 0), storage };
