@@ -51,6 +51,15 @@ export function createApp() {
   app.use(apiUsageTracker);
 
  console.log("[DIAGNOSTIC] Mounting health routes at /api/health");
+
+app.get("/__diagnostic", (_req, res) => {
+  res.status(200).json({
+    diagnostic: "ok",
+    service: "ai-knowledge-base",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use("/api/health", healthRoutes);
   app.use(`${API_PREFIX}`, apiRoutes);
 
