@@ -50,7 +50,8 @@ export function createApp() {
   app.use(globalLimiter);
   app.use(apiUsageTracker);
 
-  app.use("/api/health", healthRoutes);
+ console.log("[DIAGNOSTIC] Mounting health routes at /api/health");
+app.use("/api/health", healthRoutes);
   app.use(`${API_PREFIX}`, apiRoutes);
 
   app.use(notFoundHandler);
