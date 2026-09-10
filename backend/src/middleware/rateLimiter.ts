@@ -6,7 +6,18 @@ export const globalLimiter = rateLimit({
   limit: 600,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  message: { success: false, error: { code: "RATE_LIMITED", message: "Too many requests, please try again later." } },
+
+  // Health/readiness endpoints must never consume the API rate limit.
+  skip: (req) => req.path.startsWith("/api/health"),
+
+  message: {
+    success: false,
+    error: {
+      code: "RATE_LIMITED",
+      message: "Too many requests, please try again later.",
+    },
+  },
+
   handler: (_req, _res, next) => next(new RateLimitError()),
 });
 
