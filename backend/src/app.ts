@@ -12,17 +12,25 @@ import { globalLimiter } from "./middleware/rateLimiter.js";
 import { apiUsageTracker, errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import apiRoutes from "./routes/index.js";
 import healthRoutes from "./routes/health.routes.js";
-
 export function createApp() {
   const app = express();
+
   console.log("[DIAGNOSTIC] Express app created");
 
-app.use((req, _res, next) => {
-  console.log(
-    `[DIAGNOSTIC REQUEST] method=${req.method} url=${req.url} originalUrl=${req.originalUrl}`,
-  );
-  next();
-});
+  app.get("/__diagnostic", (_req, res) => {
+    res.status(200).json({
+      diagnostic: "ok",
+      service: "ai-knowledge-base",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.use((req, _res, next) => {
+    console.log(
+      `[DIAGNOSTIC REQUEST] method=${req.method} url=${req.url} originalUrl=${req.originalUrl}`,
+    );
+    next();
+  });
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
