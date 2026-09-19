@@ -15,6 +15,14 @@ import healthRoutes from "./routes/health.routes.js";
 
 export function createApp() {
   const app = express();
+  console.log("[DIAGNOSTIC] Express app created");
+
+app.use((req, _res, next) => {
+  console.log(
+    `[DIAGNOSTIC REQUEST] method=${req.method} url=${req.url} originalUrl=${req.originalUrl}`,
+  );
+  next();
+});
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
